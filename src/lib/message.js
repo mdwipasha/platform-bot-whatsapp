@@ -43,17 +43,32 @@ export const reply = (sock, msg, text, options = {}) => sock.sendMessage(
   { quoted: msg }
 );
 
-export const downloadMedia = async (message) => {
+export const downloadMedia = async (message, { maxBytes = Infinity } = {}) => {
   const content = unwrapMessageContent(message.message || {});
   const type = Object.keys(content).find((key) => key.endsWith('Message'));
   if (!type) return null;
   const media = content[type];
   const stream = await downloadContentFromMessage(media, type.replace('Message', ''));
   const chunks = [];
-  for await (const chunk of stream) chunks.push(chunk);
+  let size = 0;
+  for await (const chunk of stream) {
+    size += chunk.length;
+    if (size > maxBytes) {
+      stream.destroy();
+      throw new Error('Ukuran media melebihi batas yang diizinkan.');
+    }
+    chunks.push(chunk);
+  }
   const buffer = Buffer.concat(chunks);
   const fileType = await fileTypeFromBuffer(buffer).catch(() => null);
-  return { buffer, type, mime: media.mimetype || fileType?.mime || '', ext: fileType?.ext || 'bin' };
+  return {
+    buffer,
+    type,
+    // Format hasil sniffing lebih dipercaya daripada MIME yang dikirim pengirim.
+    mime: fileType?.mime || media.mimetype || '',
+    declaredMime: media.mimetype || '',
+    ext: fileType?.ext || 'bin'
+  };
 };
 
 export const unwrapMessageContent = (content = {}) => {

@@ -1,4 +1,6 @@
 import { createCommandHandler } from '../handlers/commandHandler.js';
+import { SoundStickerReferenceCache } from '../services/SoundStickerReferenceCache.js';
+import { config } from '../config/env.js';
 
 export class MessageRouter {
   constructor({
@@ -17,6 +19,9 @@ export class MessageRouter {
     this.logger = loggerService;
     this.disabledCommands = disabledCommands;
     this.pluginManager = pluginManager;
+    this.soundStickerReferences = new SoundStickerReferenceCache({
+      ttlMs: config.soundSticker.referenceTtlMs
+    });
     this.handlers = new Map();
     this.botManager = null;
   }
@@ -77,7 +82,8 @@ export class MessageRouter {
         botManager: this.botManager,
         commandManager: this.commandManager,
         eventBus: this.eventBus,
-        statsManager: this.stats
+        statsManager: this.stats,
+        soundStickerReferences: this.soundStickerReferences
       }));
     }
     return this.handlers.get(session.id);
@@ -90,6 +96,7 @@ export class MessageRouter {
 
   async routeIncoming({ session, sock, msg }) {
     msg.__sessionId = session.id;
+    this.soundStickerReferences.remember(msg);
     this.stats?.increment(session.id, 'messagesReceived');
     this.eventBus?.emitEvent('message.received', { sessionId: session.id, message: msg });
 

@@ -41,18 +41,50 @@ export const createSocket = async (botState, options = {}) => {
   const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
   const { version } = await fetchLatestBaileysVersion();
 
+  // Baileys queries group metadata for every group send unless this cache is
+  // supplied. Keep it per socket/session so a transient metadata query does
+  // not block subsequent media sends to a known group.
+  const groupMetadataCache = new Map();
   const sock = makeWASocket({
     version,
     logger: rawLogger,
     printQRInTerminal: false,
-    browser: Browsers.ubuntu("Chrome"),
+    browser: Browsers.ubuntu('Chrome'),
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, rawLogger)
     },
     qrTimeout: 60000,
     generateHighQualityLinkPreview: true,
-    markOnlineOnConnect: true
+    markOnlineOnConnect: true,
+    cachedGroupMetadata: async (jid) => groupMetadataCache.get(jid)
+  });
+
+  const fetchGroupMetadata = sock.groupMetadata.bind(sock);
+  sock.groupMetadata = async (jid) => {
+    const metadata = await fetchGroupMetadata(jid);
+    if (metadata?.id && Array.isArray(metadata.participants)) {
+      groupMetadataCache.set(jid, metadata);
+    }
+    return metadata;
+  };
+  sock.groupMetadataCache = groupMetadataCache;
+
+  sock.ev.on('groups.update', (updates = []) => {
+    for (const update of updates) {
+      const cached = groupMetadataCache.get(update.id);
+      if (cached) groupMetadataCache.set(update.id, { ...cached, ...update });
+    }
+  });
+  sock.ev.on('group-participants.update', (update) => {
+    const cached = groupMetadataCache.get(update.id);
+    if (!cached?.participants) return;
+    const participants = new Map(cached.participants.map((participant) => [participant.id, participant]));
+    for (const participant of update.participants || []) {
+      if (update.action === 'add') participants.set(participant, { id: participant });
+      if (update.action === 'remove') participants.delete(participant);
+    }
+    groupMetadataCache.set(update.id, { ...cached, participants: [...participants.values()] });
   });
 
   sock.ev.on('creds.update', saveCreds);

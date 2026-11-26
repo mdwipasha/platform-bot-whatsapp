@@ -36,6 +36,14 @@ export const config = {
   spamWindowMs: Number(process.env.SPAM_WINDOW_MS || 10000),
   spamMaxHits: Number(process.env.SPAM_MAX_HITS || 8),
   spamBlockHits: Number(process.env.SPAM_BLOCK_HITS || 18),
+  soundSticker: {
+    maxInputBytes: Number(process.env.SOUND_STICKER_MAX_INPUT_BYTES || 20 * 1024 * 1024),
+    maxVideoSeconds: Number(process.env.SOUND_STICKER_MAX_VIDEO_SECONDS || 15),
+    maxAudioSeconds: Number(process.env.SOUND_STICKER_MAX_AUDIO_SECONDS || 7),
+    maxOutputBytes: Number(process.env.SOUND_STICKER_MAX_OUTPUT_BYTES || 500 * 1024),
+    maxConcurrentJobs: Number(process.env.SOUND_STICKER_MAX_CONCURRENT_JOBS || 2),
+    referenceTtlMs: Number(process.env.SOUND_STICKER_REFERENCE_TTL_MS || 10 * 60 * 1000)
+  },
   ai: {
     openaiApiKey: process.env.OPENAI_API_KEY || '',
     geminiApiKey: process.env.GEMINI_API_KEY || '',

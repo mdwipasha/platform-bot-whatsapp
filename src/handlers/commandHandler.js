@@ -15,7 +15,8 @@ export const createCommandHandler = ({
   botManager = null,
   commandManager = null,
   eventBus = null,
-  statsManager = null
+  statsManager = null,
+  soundStickerReferences = null
 }) => async ({ sock, msg }) => {
   try {
     if (!msg.message || msg.key.remoteJid === 'status@broadcast') return;
@@ -76,7 +77,8 @@ export const createCommandHandler = ({
         loader,
         db,
         config,
-        botState
+        botState,
+        soundStickerReferences
       });
     } catch (execError) {
       execSuccess = false;

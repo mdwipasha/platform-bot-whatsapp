@@ -66,6 +66,33 @@ Dashboard:
 http://localhost:3000
 ```
 
+## Sound Sticker WhatsApp
+
+Command baru ini menghasilkan satu pesan sticker animasi dengan audio tertanam:
+
+- `.ss` — buat Sound Sticker.
+- `.ssvideo` — alias `.ss` untuk video.
+- `.sshelp` — lihat petunjuk di WhatsApp.
+
+Cara pakai:
+
+1. Kirim gambar dan audio, lalu reply salah satu media dengan `.ss`.
+2. Kirim video ber-audio, lalu reply videonya dengan `.ss` untuk memakai audio asli.
+3. Untuk audio terpisah, kirim video dan audio di chat yang sama dari pengirim yang sama, lalu reply salah satunya dengan `.ss` dalam 10 menit.
+
+Format yang diterima: JPG/PNG/WebP, MP3/OGG/WAV/M4A, dan MP4/MOV/WebM/MKV/AVI. Batas default adalah input 20 MB, 15 detik pertama video, audio 7 detik, output WebP 500 KB, serta dua pekerjaan media bersamaan. Ubah melalui `.env`:
+
+```env
+SOUND_STICKER_MAX_INPUT_BYTES=20971520
+SOUND_STICKER_MAX_VIDEO_SECONDS=15
+SOUND_STICKER_MAX_AUDIO_SECONDS=7
+SOUND_STICKER_MAX_OUTPUT_BYTES=512000
+SOUND_STICKER_MAX_CONCURRENT_JOBS=2
+SOUND_STICKER_REFERENCE_TTL_MS=600000
+```
+
+`ffmpeg-static` dipasang sebagai dependency dan mengunduh binary FFmpeg yang diperlukan saat `npm install`. Pastikan server dapat mengakses artefak binary paket tersebut pada instalasi pertama. Feature Sound Sticker sedang roll-out bertahap pada WhatsApp Android; verifikasi pada akun penerima yang telah mendapat fitur (ikon audio di sticker) sebelum mengaktifkannya di produksi.
+
 ## Deploy
 
 1. Gunakan Node.js 20 atau lebih baru.
@@ -148,7 +175,7 @@ Downloader: `tiktok`, `instagram`, `facebook`, `ytmp3`, `ytmp4`.
 
 AI: `chatgpt`, `gemini`, `claude`.
 
-Sticker/Media: `sticker`, `meme`, `toimage`, `tovideo`, `toaudio`, `tosticker`.
+Sticker/Media: `sticker`, `meme`, `ss`, `ssvideo`, `sshelp`, `toimage`, `tovideo`, `toaudio`, `tosticker`.
 
 Owner: `eval`, `terminal`, `restart`, `shutdown`, `clearsession`, `backupdb`, `broadcast`.
 
